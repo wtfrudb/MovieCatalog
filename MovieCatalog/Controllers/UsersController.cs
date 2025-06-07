@@ -9,9 +9,9 @@ namespace MovieCatalog.Controllers
     [ApiController]
     public class UsersController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly ApplicationDbContext _context;
 
-        public UsersController(AppDbContext context)
+        public UsersController(ApplicationDbContext context)
         {
             _context = context;
         }
