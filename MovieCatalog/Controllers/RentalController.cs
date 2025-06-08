@@ -27,50 +27,53 @@ namespace MovieCatalog.Controllers
             public int Quantity { get; set; }
         }
 
-        // DTO для запроса создания заказа
         public class RentalOrderRequest
         {
             public List<RentalItemDto> Items { get; set; } = new List<RentalItemDto>();
         }
 
-
         [HttpPost("create")]
         [Authorize]
-        public async Task<IActionResult> CreateOrder([FromBody] RentalOrderRequest request)
+        public async Task<IActionResult> CreateOrder([FromBody] RentRequest request)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var user = await _context.Users.FindAsync(userId);
-            if (user == null) return Unauthorized();
+            int userId = GetUserIdFromToken();
 
             var order = new RentalOrder
             {
-                UserId = int.Parse(userId),
-                RentalDate = DateTime.UtcNow,
+                UserId = userId,
+                RentalDate = DateTime.Now, // или DateTime.Now, если нужен локальный
                 Items = request.Items.Select(item => new RentalItem
                 {
                     MovieId = item.MovieId,
-                    Quantity = item.Quantity
+                    Quantity = item.Quantity,
+                    ReturnDate = item.ReturnDate  // передаем дату возврата
                 }).ToList()
             };
 
             _context.RentalOrders.Add(order);
             await _context.SaveChangesAsync();
 
-            return Ok(order);
+            var orderDto = new RentalOrderDto
+            {
+                Id = order.Id,
+                UserId = order.UserId,
+                RentalDate = order.RentalDate,
+                Items = order.Items.Select(i => new RentalItemResponseDto
+                {
+                    MovieId = i.MovieId,
+                    Quantity = i.Quantity
+                }).ToList()
+            };
+
+            return Ok(orderDto);
         }
 
-
-        // GET: api/rental/my
         [HttpGet("my")]
         public async Task<IActionResult> GetUserOrders()
         {
             try
             {
-                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
-                {
-                    return Unauthorized("Не удалось определить пользователя");
-                }
+                int userId = GetUserIdFromToken();
 
                 var orders = await _context.RentalOrders
                     .Where(o => o.UserId == userId)
@@ -79,13 +82,56 @@ namespace MovieCatalog.Controllers
                     .AsNoTracking()
                     .ToListAsync();
 
-                return Ok(orders);
+                var ordersDto = orders.Select(o => new RentalOrderDto
+                {
+                    Id = o.Id,
+                    UserId = o.UserId,
+                    RentalDate = o.RentalDate,
+                    Items = o.Items.Select(i => new RentalItemResponseDto
+                    {
+                        MovieId = i.MovieId,
+                        MovieTitle = i.Movie?.Title ?? "",
+                        ReleaseYear = i.Movie?.ReleaseYear ?? 0,  // год выпуска
+                        MovieDescription = i.Movie?.Description ?? "",
+                        Quantity = i.Quantity,
+                        ReturnDate = i.ReturnDate // дата возврата из RentalItem
+                    }).ToList()
+
+                }).ToList();
+
+                return Ok(ordersDto);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Ошибка при получении заказов пользователя");
-                return StatusCode(500, "Внутренняя ошибка при получении заказов");
+                return StatusCode(500, new { message = "Внутренняя ошибка при получении заказов", details = ex.Message });
             }
+        }
+
+        [Authorize]
+        [HttpDelete("{id}")]
+        public IActionResult DeleteOrder(int id)
+        {
+            var userId = GetUserIdFromToken();
+            var order = _context.RentalOrders.Include(r => r.Items).FirstOrDefault(r => r.Id == id && r.UserId == userId);
+            if (order == null)
+                return NotFound("Order not found");
+
+            _context.RentalItems.RemoveRange(order.Items);
+            _context.RentalOrders.Remove(order);
+            _context.SaveChanges();
+            return Ok();
+        }
+
+        // ✅ Добавлен недостающий метод
+        private int GetUserIdFromToken()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdClaim, out int userId))
+            {
+                throw new UnauthorizedAccessException("Невалидный идентификатор пользователя");
+            }
+            return userId;
         }
     }
 }

@@ -81,7 +81,8 @@ namespace MovieCatalog.Controllers
             {
                 token = new JwtSecurityTokenHandler().WriteToken(token),
                 email = user.Email,
-                role = user.Email == "admin@gmail.com" ? "Admin" : "User"
+                role = user.Email == "admin@gmail.com" ? "Admin" : "User",
+                userId = user.Id
             });
         }
     }
