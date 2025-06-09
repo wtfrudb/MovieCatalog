@@ -54,6 +54,7 @@ namespace MovieCatalog.Controllers
             movie.RecordingCompany = updatedMovie.RecordingCompany;
             movie.ReleaseYear = updatedMovie.ReleaseYear;
             movie.ImageUrl = updatedMovie.ImageUrl;
+            movie.Description = updatedMovie.Description;
 
             await _context.SaveChangesAsync();
             return Ok(movie);

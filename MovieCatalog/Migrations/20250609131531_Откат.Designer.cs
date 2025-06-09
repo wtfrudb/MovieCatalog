@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MovieCatalog.Data;
 
@@ -10,9 +11,11 @@ using MovieCatalog.Data;
 namespace MovieCatalog.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250609131531_Откат")]
+    partial class Откат
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -38,7 +41,7 @@ namespace MovieCatalog.Migrations
 
                     b.HasIndex("MovieId");
 
-                    b.ToTable("CartItems", (string)null);
+                    b.ToTable("CartItems");
                 });
 
             modelBuilder.Entity("MovieCatalog.Models.Movie", b =>
@@ -80,7 +83,7 @@ namespace MovieCatalog.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Movies", (string)null);
+                    b.ToTable("Movies");
                 });
 
             modelBuilder.Entity("MovieCatalog.Models.Rental", b =>
@@ -107,7 +110,7 @@ namespace MovieCatalog.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Rental", (string)null);
+                    b.ToTable("Rental");
                 });
 
             modelBuilder.Entity("MovieCatalog.Models.User", b =>
@@ -138,7 +141,7 @@ namespace MovieCatalog.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("RentalItem", b =>
@@ -165,7 +168,7 @@ namespace MovieCatalog.Migrations
 
                     b.HasIndex("RentalOrderId");
 
-                    b.ToTable("RentalItems", (string)null);
+                    b.ToTable("RentalItems");
                 });
 
             modelBuilder.Entity("RentalOrder", b =>
@@ -185,7 +188,7 @@ namespace MovieCatalog.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("RentalOrders", (string)null);
+                    b.ToTable("RentalOrders");
                 });
 
             modelBuilder.Entity("MovieCatalog.Models.CartItem", b =>
